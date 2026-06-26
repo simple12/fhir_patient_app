@@ -1,0 +1,36 @@
+# FHIR backend only (PostgreSQL + HAPI) — for GCE or any host where patient-app runs elsewhere.
+# Usage: docker compose -f docker-compose.fhir.yml up -d
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hapi
+      POSTGRES_USER: hapi
+      POSTGRES_PASSWORD: hapi
+    volumes:
+      - hapi_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hapi -d hapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      spring.datasource.url: jdbc:postgresql://db:5432/hapi
+      spring.datasource.username: hapi
+      spring.datasource.password: hapi
+      spring.datasource.driverClassName: org.postgresql.Driver
+      spring.jpa.properties.hibernate.dialect: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+
+volumes:
+  hapi_pg_data:

@@ -234,6 +234,72 @@ Optional overrides: `SERVICE_NAME`, `REGION`, `PROJECT_ID`, `FHIR_ACCESS_TOKEN`.
 
 Local Docker Compose is unchanged — it still sets `FHIR_WAIT=true` and `FHIR_BASE_URL=http://hapi-fhir:8080/fhir` for the bundled stack.
 
+## Writable FHIR backend on GCP (HAPI + PostgreSQL)
+
+Cloud Run hosts **only** the patient app. For full create/edit/delete, run **HAPI FHIR + PostgreSQL** on a small GCE VM and point Cloud Run at it.
+
+```
+Cloud Run (patient-app)  ──HTTP──▶  GCE VM :8080  (HAPI + Postgres)
+```
+
+### One-command setup
+
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+
+npm run deploy:gcp-full
+```
+
+This will:
+
+1. Create firewall rule `allow-fhir-hapi-8080` (tcp:8080 → VMs tagged `fhir-server`)
+2. Create VM `fhir-hapi` (`e2-standard-2`, Ubuntu 22.04) and run `docker-compose.fhir.yml`
+3. Wait for HAPI `/metadata`
+4. Update Cloud Run `FHIR_BASE_URL` to `http://VM_EXTERNAL_IP:8080/fhir`
+5. Seed 5 demo patients (`RUN_SEED=false` to skip)
+
+First boot can take **5–10 minutes** (Docker install + HAPI init).
+
+### Step by step
+
+```bash
+# 1. Provision HAPI on GCE
+npm run deploy:fhir-gce
+
+# 2. Point Cloud Run at the VM (uses VM IP if FHIR_BASE_URL unset)
+export FHIR_BASE_URL=http://YOUR_VM_IP:8080/fhir
+RUN_SEED=true bash scripts/connect-cloud-run-fhir.sh
+
+# 3. Or seed from your laptop
+FHIR_BASE_URL=http://YOUR_VM_IP:8080/fhir npm run seed:clinical
+```
+
+### Cloud Run env after connect
+
+| Variable | Value |
+|----------|--------|
+| `FHIR_BASE_URL` | `http://VM_EXTERNAL_IP:8080/fhir` |
+| `FHIR_WAIT` | `false` |
+| `PORT` | *(do not set)* |
+
+### Operations
+
+```bash
+# SSH + check containers
+gcloud compute ssh fhir-hapi --zone=us-central1-a --command='sudo docker compose -f /opt/fhir_patient_app/docker-compose.fhir.yml ps'
+
+# Restart HAPI stack on VM
+gcloud compute ssh fhir-hapi --zone=us-central1-a --command='cd /opt/fhir_patient_app && sudo docker compose -f docker-compose.fhir.yml restart'
+
+# Stop VM to save cost (data persists on disk)
+gcloud compute instances stop fhir-hapi --zone=us-central1-a
+```
+
+**Security (demo):** port 8080 is open to the internet. For production, use a VPC connector + private IP, HTTPS load balancer, and auth — not public HTTP.
+
+**Cost (approx.):** `e2-standard-2` ~$50/mo if left running 24/7; stop the VM when not in use.
+
 ## Production build
 
 ```bash
@@ -265,9 +331,10 @@ client/              Vite + React UI (pages, components, lib)
 server/              Express FHIR proxy
 config/              Runtime FHIR target (fhir.json, mounted in Docker)
 seed/                Generated demo-clinical-bundle.json
-scripts/             generate-seed-bundle.mjs, seed-clinical-data.sh
+scripts/             generate-seed-bundle.mjs, seed-clinical-data.sh, deploy-*.sh
 Dockerfile           Multi-stage production image (patient-app:latest)
-docker-compose.yml   patient-app + HAPI FHIR + PostgreSQL
+docker-compose.yml   patient-app + HAPI FHIR + PostgreSQL (local)
+docker-compose.fhir.yml   HAPI + PostgreSQL only (GCE backend)
 PRD.md               Product requirements
 deployment_options_to_review.md   Hosting comparison + Railway plan (§10)
 ```
