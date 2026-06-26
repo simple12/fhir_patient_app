@@ -13,7 +13,8 @@
     "fhir:up": "docker compose up -d db hapi-fhir",
     "fhir:down": "docker compose down",
     "seed:generate": "node scripts/generate-seed-bundle.mjs",
-    "seed:clinical": "bash scripts/seed-clinical-data.sh"
+    "seed:clinical": "bash scripts/seed-clinical-data.sh",
+    "deploy:cloud-run": "bash scripts/deploy-cloud-run.sh"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

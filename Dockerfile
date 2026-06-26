@@ -21,7 +21,8 @@ WORKDIR /app/server
 RUN apk add --no-cache wget
 
 ENV NODE_ENV=production
-ENV PORT=3001
+# Cloud Run injects PORT (typically 8080). Docker Compose sets PORT=3001 at runtime.
+ENV FHIR_WAIT=false
 
 COPY server/package.json server/package-lock.json ./
 RUN npm ci --omit=dev
@@ -31,9 +32,9 @@ COPY --from=client-build /app/client/dist ../client/dist
 COPY server/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
-EXPOSE 3001
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:3001/ > /dev/null || exit 1
+  CMD sh -c 'wget -qO- "http://127.0.0.1:${PORT:-8080}/" > /dev/null || exit 1'
 
 CMD ["./docker-entrypoint.sh"]

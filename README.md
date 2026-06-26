@@ -218,6 +218,22 @@ Click a patient **name** to open the details page directly.
 | `npm run seed:clinical` | Generate and POST demo patients + clinical data |
 | `npm run seed:generate` | Generate `seed/demo-clinical-bundle.json` only |
 
+## Google Cloud Run (app only)
+
+Deploy **only** `patient-app` — no bundled HAPI. Point at an external FHIR server (default in the deploy script: public HAPI sandbox).
+
+**Do not set `PORT`** in Cloud Run env vars; the platform injects it (usually `8080`). The Dockerfile defaults to `FHIR_WAIT=false` so startup does not block on a local HAPI container.
+
+```bash
+# One-time: gcloud auth login && gcloud config set project YOUR_PROJECT_ID
+export FHIR_BASE_URL=https://hapi.fhir.org/baseR4   # or your FHIR server
+bash scripts/deploy-cloud-run.sh
+```
+
+Optional overrides: `SERVICE_NAME`, `REGION`, `PROJECT_ID`, `FHIR_ACCESS_TOKEN`.
+
+Local Docker Compose is unchanged — it still sets `FHIR_WAIT=true` and `FHIR_BASE_URL=http://hapi-fhir:8080/fhir` for the bundled stack.
+
 ## Production build
 
 ```bash
