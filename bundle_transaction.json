@@ -1,0 +1,99 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:patient-001",
+      "resource": {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "urn:oid:poc:patient-ids",
+            "value": "PAT-JOHNDOE-001"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "official",
+            "family": "Doe",
+            "given": ["John"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1980-01-01"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Patient?identifier=urn:oid:poc:patient-ids|PAT-JOHNDOE-001"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:practitioner-001",
+      "resource": {
+        "resourceType": "Practitioner",
+        "identifier": [
+          {
+            "system": "urn:oid:poc:practitioner-ids",
+            "value": "PRAC-ALICESMITH-001"
+          }
+        ],
+        "active": true,
+        "name": [
+          {
+            "use": "official",
+            "family": "Smith",
+            "given": ["Alice"],
+            "prefix": ["Dr."]
+          }
+        ],
+        "gender": "female"
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Practitioner?identifier=urn:oid:poc:practitioner-ids|PRAC-ALICESMITH-001"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:observation-001",
+      "resource": {
+        "resourceType": "Observation",
+        "identifier": [
+          {
+            "system": "urn:oid:poc:observation-ids",
+            "value": "OBS-JOHNDOE-TEMP-001"
+          }
+        ],
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8310-5",
+              "display": "Body temperature"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "urn:uuid:patient-001"
+        },
+        "performer": [
+          {
+            "reference": "urn:uuid:practitioner-001"
+          }
+        ],
+        "effectiveDateTime": "2026-06-16T10:00:00Z",
+        "valueQuantity": {
+          "value": 37.2,
+          "unit": "°C",
+          "system": "http://unitsofmeasure.org",
+          "code": "Cel"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Observation?identifier=urn:oid:poc:observation-ids|OBS-JOHNDOE-TEMP-001"
+      }
+    }
+  ]
+}
