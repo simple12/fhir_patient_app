@@ -217,88 +217,24 @@ Click a patient **name** to open the details page directly.
 | `npm run fhir:up` | Start HAPI + Postgres only |
 | `npm run seed:clinical` | Generate and POST demo patients + clinical data |
 | `npm run seed:generate` | Generate `seed/demo-clinical-bundle.json` only |
+| `npm run deploy:cloud-run` | Deploy app only to Google Cloud Run |
+| `npm run deploy:fhir-gce` | Provision HAPI + Postgres on GCE |
+| `npm run deploy:gcp-full` | GCE backend + connect Cloud Run + seed |
 
-## Google Cloud Run (app only)
+## Deployment
 
-Deploy **only** `patient-app` — no bundled HAPI. Point at an external FHIR server (default in the deploy script: public HAPI sandbox).
+**Full guide:** [DEPLOYMENT.md](./DEPLOYMENT.md)
 
-**Do not set `PORT`** in Cloud Run env vars; the platform injects it (usually `8080`). The Dockerfile defaults to `FHIR_WAIT=false` so startup does not block on a local HAPI container.
+| Environment | Command / approach |
+|-------------|-------------------|
+| **Local dev** | `npm run fhir:up` → `npm run dev` |
+| **Local Docker** | `npm run docker:up` |
+| **GCP app only** | Cloud Run from GitHub or `npm run deploy:cloud-run` |
+| **GCP full CRUD** | `npm run deploy:gcp-full` (Cloud Run + GCE HAPI) |
 
-```bash
-# One-time: gcloud auth login && gcloud config set project YOUR_PROJECT_ID
-export FHIR_BASE_URL=https://hapi.fhir.org/baseR4   # or your FHIR server
-bash scripts/deploy-cloud-run.sh
-```
+On Cloud Run: set `FHIR_BASE_URL` and `FHIR_WAIT=false`; **do not set `PORT`**.
 
-Optional overrides: `SERVICE_NAME`, `REGION`, `PROJECT_ID`, `FHIR_ACCESS_TOKEN`.
-
-Local Docker Compose is unchanged — it still sets `FHIR_WAIT=true` and `FHIR_BASE_URL=http://hapi-fhir:8080/fhir` for the bundled stack.
-
-## Writable FHIR backend on GCP (HAPI + PostgreSQL)
-
-Cloud Run hosts **only** the patient app. For full create/edit/delete, run **HAPI FHIR + PostgreSQL** on a small GCE VM and point Cloud Run at it.
-
-```
-Cloud Run (patient-app)  ──HTTP──▶  GCE VM :8080  (HAPI + Postgres)
-```
-
-### One-command setup
-
-```bash
-gcloud auth login
-gcloud config set project YOUR_PROJECT_ID
-
-npm run deploy:gcp-full
-```
-
-This will:
-
-1. Create firewall rule `allow-fhir-hapi-8080` (tcp:8080 → VMs tagged `fhir-server`)
-2. Create VM `fhir-hapi` (`e2-standard-2`, Ubuntu 22.04) and run `docker-compose.fhir.yml`
-3. Wait for HAPI `/metadata`
-4. Update Cloud Run `FHIR_BASE_URL` to `http://VM_EXTERNAL_IP:8080/fhir`
-5. Seed 5 demo patients (`RUN_SEED=false` to skip)
-
-First boot can take **5–10 minutes** (Docker install + HAPI init).
-
-### Step by step
-
-```bash
-# 1. Provision HAPI on GCE
-npm run deploy:fhir-gce
-
-# 2. Point Cloud Run at the VM (uses VM IP if FHIR_BASE_URL unset)
-export FHIR_BASE_URL=http://YOUR_VM_IP:8080/fhir
-RUN_SEED=true bash scripts/connect-cloud-run-fhir.sh
-
-# 3. Or seed from your laptop
-FHIR_BASE_URL=http://YOUR_VM_IP:8080/fhir npm run seed:clinical
-```
-
-### Cloud Run env after connect
-
-| Variable | Value |
-|----------|--------|
-| `FHIR_BASE_URL` | `http://VM_EXTERNAL_IP:8080/fhir` |
-| `FHIR_WAIT` | `false` |
-| `PORT` | *(do not set)* |
-
-### Operations
-
-```bash
-# SSH + check containers
-gcloud compute ssh fhir-hapi --zone=us-central1-a --command='sudo docker compose -f /opt/fhir_patient_app/docker-compose.fhir.yml ps'
-
-# Restart HAPI stack on VM
-gcloud compute ssh fhir-hapi --zone=us-central1-a --command='cd /opt/fhir_patient_app && sudo docker compose -f docker-compose.fhir.yml restart'
-
-# Stop VM to save cost (data persists on disk)
-gcloud compute instances stop fhir-hapi --zone=us-central1-a
-```
-
-**Security (demo):** port 8080 is open to the internet. For production, use a VPC connector + private IP, HTTPS load balancer, and auth — not public HTTP.
-
-**Cost (approx.):** `e2-standard-2` ~$50/mo if left running 24/7; stop the VM when not in use.
+Platform comparison and alternatives: [deployment_options_to_review.md](./deployment_options_to_review.md).
 
 ## Production build
 
@@ -335,13 +271,10 @@ scripts/             generate-seed-bundle.mjs, seed-clinical-data.sh, deploy-*.s
 Dockerfile           Multi-stage production image (patient-app:latest)
 docker-compose.yml   patient-app + HAPI FHIR + PostgreSQL (local)
 docker-compose.fhir.yml   HAPI + PostgreSQL only (GCE backend)
+DEPLOYMENT.md        Step-by-step deploy guide (local + GCP)
 PRD.md               Product requirements
-deployment_options_to_review.md   Hosting comparison + Railway plan (§10)
+deployment_options_to_review.md   Hosting comparison (GCP chosen; see DEPLOYMENT.md)
 ```
-
-## Deployment
-
-See [deployment_options_to_review.md](./deployment_options_to_review.md) for hosting options (including Railway deployment plan in §10). See [PRD.md](./PRD.md) for full product requirements.
 
 ## License
 

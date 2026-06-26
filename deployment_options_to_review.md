@@ -1,7 +1,7 @@
 # Deployment Options — For Review
 
-> **Status:** Draft for review. No final hosting decision has been made.
-> Step-by-step deploy instructions will be written in `DEPLOYMENT.md` after a platform is chosen.
+> **Status:** Draft for review. **Production deployment:** GCP Cloud Run + GCE (see [DEPLOYMENT.md](./DEPLOYMENT.md)).
+> Step-by-step deploy instructions: [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## 1. Context
 
@@ -18,13 +18,23 @@ The Patient Management App consists of:
 
 Testers access **one public HTTPS URL**. The FHIR server is reached server-side only by the Express proxy — credentials and the FHIR base URL are never exposed to the browser.
 
+### Production deployment (chosen)
+
+| Layer | Platform | Details |
+|-------|----------|---------|
+| **patient-app** | Google Cloud Run | Dockerfile from GitHub; port 8080 injected by platform |
+| **HAPI + PostgreSQL** | Google Compute Engine | VM `fhir-hapi`; `docker-compose.fhir.yml` |
+| **Guide** | [DEPLOYMENT.md](./DEPLOYMENT.md) | Scripts: `deploy:cloud-run`, `deploy:fhir-gce`, `deploy:gcp-full` |
+
 ```mermaid
 flowchart LR
-  Testers[Testers] --> AppURL[Public app URL]
-  AppURL --> Express[Express UI and Proxy]
-  Express --> HAPI[HAPI FHIR]
+  Testers[Testers] --> CR[Cloud Run]
+  CR --> Express[Express UI and Proxy]
+  Express --> HAPI[HAPI on GCE :8080]
   HAPI --> PG[(PostgreSQL)]
 ```
+
+### Local / alternative architectures
 
 ### Resource requirements
 
@@ -50,6 +60,7 @@ HAPI FHIR is Java-based and memory-heavy. Approximate RAM per component:
 | **C — Reliable demo (PaaS)** | ~$5–20/mo | Paid Render or Railway services | Stable URL, owned data |
 | **D — VPS all-in-one** | ~$4–6/mo | Hetzner/Contabo Docker Compose | Cheapest long-term persistence |
 | **E — Local only** | $0 | `docker compose` on laptop + optional tunnel | Private dev/demo |
+| **F — GCP Cloud Run + GCE** | ~$5–50/mo | Cloud Run app + GCE HAPI VM | **Current production**; full CRUD, stop VM to save cost |
 
 ---
 

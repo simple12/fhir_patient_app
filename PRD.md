@@ -1,7 +1,7 @@
 # FHIR R4 Patient Management App — PRD
 
-> **Status:** MVP + Patient Details complete. Hosting decision deferred.
-> **Hosting:** See [deployment_options_to_review.md](./deployment_options_to_review.md) (includes Railway plan in §10).
+> **Status:** MVP + Patient Details complete. **Hosting:** GCP Cloud Run + GCE (see [DEPLOYMENT.md](./DEPLOYMENT.md)).
+> **Alternatives:** [deployment_options_to_review.md](./deployment_options_to_review.md) (includes Railway plan in §10).
 
 ## 1. Product Overview
 
@@ -257,6 +257,7 @@ fhir_2/
 ├── docker-compose.yml
 ├── Dockerfile                # patient-app image
 ├── PRD.md
+├── DEPLOYMENT.md
 ├── deployment_options_to_review.md
 ├── README.md
 └── package.json
@@ -318,7 +319,7 @@ fhir_2/
 - FHIR `OperationOutcome` field-level error mapping
 - App authentication (OAuth / SSO)
 - Optional Synthea bulk import script
-- `DEPLOYMENT.md` after final hosting platform choice
+- `DEPLOYMENT.md` for GCP Cloud Run + GCE operations
 
 ---
 
@@ -336,7 +337,7 @@ fhir_2/
 | Runtime FHIR config (`config/fhir.json`) | Done |
 | Synthetic seed scripts (`seed:clinical`, 5 demo patients) | Done |
 | `README.md` | Done |
-| `DEPLOYMENT.md` (standalone) | Optional / deferred |
+| `DEPLOYMENT.md` | Done |
 
 ---
 
@@ -384,13 +385,10 @@ docker compose up -d --build patient-app
 
 ## 11. Deployment and User Testing
 
+> **Deploy guide:** [DEPLOYMENT.md](./DEPLOYMENT.md)  
 > **Platform comparison:** [deployment_options_to_review.md](./deployment_options_to_review.md)
-> **Railway plan:** §10 of that document.
 
-- Testers get **one public URL** (Express serves UI + proxy).
-- **Option A (recommended on PaaS):** deploy `patient-app` only + external FHIR URL.
-- **Option B:** full stack (HAPI + Postgres + app) on VPS or paid PaaS.
-- Demo banner and synthetic data only — **no real PHI**.
+**Production (GCP):** Cloud Run hosts `patient-app`; GCE VM runs HAPI + PostgreSQL for writable FHIR. Demo banner and synthetic data only — **no real PHI**.
 
 ---
 
@@ -409,7 +407,7 @@ docker compose up -d --build patient-app
 | 9 | Docker Compose (db, hapi-fhir, patient-app) | Done |
 | 10 | Synthetic multi-patient seed (`seed:clinical`) | Done |
 | 11 | README + deployment options doc | Done |
-| 12 | Choose hosting → optional `DEPLOYMENT.md` | Pending |
+| 12 | GCP deployment guide (`DEPLOYMENT.md`) | Done |
 
 ---
 
