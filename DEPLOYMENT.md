@@ -3,6 +3,7 @@
 Step-by-step instructions for running the FHIR Patient Management App locally and on **Google Cloud Platform**.
 
 > **Chosen production path:** Cloud Run (`patient-app`) + GCE VM (`HAPI FHIR` + PostgreSQL).  
+> **GCP ops reference:** [GCP_Readme.md](./GCP_Readme.md) (endpoints, cost control, stop/start).  
 > Platform comparison and alternatives: [deployment_options_to_review.md](./deployment_options_to_review.md).
 
 ---

@@ -223,7 +223,7 @@ Click a patient **name** to open the details page directly.
 
 ## Deployment
 
-**Full guide:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+**Full guide:** [DEPLOYMENT.md](./DEPLOYMENT.md) · **GCP ops & cost control:** [GCP_Readme.md](./GCP_Readme.md)
 
 | Environment | Command / approach |
 |-------------|-------------------|
@@ -272,6 +272,7 @@ Dockerfile           Multi-stage production image (patient-app:latest)
 docker-compose.yml   patient-app + HAPI FHIR + PostgreSQL (local)
 docker-compose.fhir.yml   HAPI + PostgreSQL only (GCE backend)
 DEPLOYMENT.md        Step-by-step deploy guide (local + GCP)
+GCP_Readme.md        GCP endpoints, cost control, day-to-day ops
 PRD.md               Product requirements
 deployment_options_to_review.md   Hosting comparison (GCP chosen; see DEPLOYMENT.md)
 ```
